@@ -263,19 +263,15 @@ tooltip.fluidhatch.tank.info=Can hold %s mb
 tooltip.fluidhatch.tank.mek=Accepts Mekanism Gas
 
 tooltip.energyhatch.charge=%s / %s %s
-tooltip.energyhatch.storage=Stores %s FE
-tooltip.energyhatch.out.transfer=Transfers %s FE per tick
-tooltip.energyhatch.in.accept=Accepts %s FE per tick
+tooltip.energyhatch.storage=Capacity: §a%s FE
+tooltip.energyhatch.limit=Transfer limit: §b%s FE/t
 
 tooltip.energyhatch.ic2.powerrate=EU/t
 tooltip.energyhatch.ic2.any=Any
-tooltip.energyhatch.ic2.out.voltage=EU Output Voltage: %s
-tooltip.energyhatch.ic2.out.transfer=EU Output Transfer: %s %s
-tooltip.energyhatch.ic2.in.voltage=EU Input Voltage: %s
-tooltip.energyhatch.ic2.in.transfer=EU Input Transfer: %s %s
+tooltip.energyhatch.ic2.voltage=EU Voltage: %s
+tooltip.energyhatch.ic2.transfer=EU Transfer limit: §9%s §9%s
 
-tooltip.energyhatch.gregtech.voltage.in=Voltage IN: §a%s §7(§a%s§7)
-tooltip.energyhatch.gregtech.voltage.out=Voltage OUT: §a%s §7(§a%s§7)
+tooltip.energyhatch.gregtech.voltage=Voltage: §a%s §7(§a%s§7)
 tooltip.energyhatch.gregtech.amperage=Amperage: §e%s
 tooltip.energyhatch.gregtech.storage=Internal Energy Capacity: §9%s
 
@@ -299,6 +295,20 @@ item.modularmachinery.itemblueprint.name=Machine Blueprint
 item.modularmachinery.itemmodularium.name=Modularium
 item.modularmachinery.itemconstructtool.name=Construct Selection Tool
 item.modularmachinery.machine_projector.name=Machine Projector
+
+item.modularmachinery.energy_power_module.tiny.name=Tiny Energy Power Module
+item.modularmachinery.energy_power_module.small.name=Small Energy Power Module
+item.modularmachinery.energy_power_module.normal.name=Normal Energy Power Module
+item.modularmachinery.energy_power_module.reinforced.name=Reinforced Energy Power Module
+item.modularmachinery.energy_power_module.big.name=Big Energy Power Module
+item.modularmachinery.energy_power_module.huge.name=Huge Energy Power Module
+item.modularmachinery.energy_power_module.ludicrous.name=Ludicrous Energy Power Module
+item.modularmachinery.energy_power_module.ultimate.name=Ultimate Energy Power Module
+item.modularmachinery.energy_power_module.enormous.name=Enormous Energy Power Module
+item.modularmachinery.energy_power_module.immeasurable.name=Immeasurable Energy Power Module
+item.modularmachinery.energy_power_module.incredible.name=Incredible Energy Power Module
+item.modularmachinery.energy_power_module.maximum.name=Maximum Energy Power Module
+item.modularmachinery.energy_power_module.infinity.name=Infinity Energy Power Module
 
 block.modularmachinery.crushing_wheels.name=Crushing Wheels
 
@@ -355,23 +365,9 @@ tile.modularmachinery.blockfluidoutputhatch.huge.name=Huge Fluid Output Hatch
 tile.modularmachinery.blockfluidoutputhatch.ludicrous.name=Ludicrous Fluid Output Hatch
 tile.modularmachinery.blockfluidoutputhatch.vacuum.name=Vacuum Fluid Output Hatch
 
-tile.modularmachinery.blockenergyinputhatch.tiny.name=Tiny Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.small.name=Small Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.normal.name=Normal Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.reinforced.name=Reinforced Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.big.name=Big Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.huge.name=Huge Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.ludicrous.name=Ludicrous Energy Input Hatch
-tile.modularmachinery.blockenergyinputhatch.ultimate.name=Ultimate Energy Input Hatch
+tile.modularmachinery.blockenergyinputhatch.name=Energy Input Hatch
 
-tile.modularmachinery.blockenergyoutputhatch.tiny.name=Tiny Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.small.name=Small Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.normal.name=Normal Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.reinforced.name=Reinforced Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.big.name=Big Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.huge.name=Huge Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.ludicrous.name=Ludicrous Energy Output Hatch
-tile.modularmachinery.blockenergyoutputhatch.ultimate.name=Ultimate Energy Output Hatch
+tile.modularmachinery.blockenergyoutputhatch.name=Energy Output Hatch
 
 tile.modularmachinery.blocksmartinterface.number.name=Smart Data Interface (Number)
 tile.modularmachinery.blocksmartinterface.string.name=Smart Data Interface (String)

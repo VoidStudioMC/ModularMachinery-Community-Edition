@@ -15,6 +15,7 @@ import hellfirepvp.modularmachinery.common.base.Mods;
 import hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData;
 import hellfirepvp.modularmachinery.common.machine.IOType;
 import hellfirepvp.modularmachinery.common.util.IEnergyHandlerAsync;
+import hellfirepvp.modularmachinery.common.util.IOInventory;
 import hellfirepvp.modularmachinery.common.util.MiscUtils;
 import hellfirepvp.modularmachinery.common.util.RedstoneHelper;
 import mcjty.lib.api.power.IBigPower;
@@ -29,6 +30,8 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fml.common.Optional;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.voidstudio.mmce.common.item.ItemEnergyPowerModule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,8 +57,9 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
         SelectiveUpdateTileEntity,
         IBigPower {
 
+    public static final int POWER_MODULE_SLOT = 0;
     protected final AtomicLong energy = new AtomicLong();
-    protected EnergyHatchData size;
+    protected EnergyHatchData size = EMPTY;
     protected BlockPos foundCore = null;
     protected int energyCoreSearchFailedCount = 0;
     private GTEnergyContainer energyContainer;
@@ -63,11 +67,16 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
 
     protected boolean tickedOnce = false;
 
+    protected IOInventory inventory;
+
     public TileEnergyHatch() {
+        this.inventory = buildInventory();
+        this.inventory.setStackLimit(1, POWER_MODULE_SLOT);
+        this.inventory.setListener(this::onPowerModuleInventoryChanged);
     }
 
-    public TileEnergyHatch(EnergyHatchData size, IOType ioType) {
-        this.size = size;
+    public TileEnergyHatch(IOType ioType) {
+        this();
         this.energyContainer = new GTEnergyContainer(this, ioType);
     }
 
@@ -174,7 +183,7 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
 
     @Override
     public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-        if (capability == CapabilityEnergy.ENERGY) {
+        if (capability == CapabilityEnergy.ENERGY || capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
             return true;
         }
 
@@ -191,6 +200,9 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
         if (Mods.GREGTECH.isPresent() && capability == getGTEnergyCapability()) {
             return (T) this.energyContainer;
         }
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            return (T) this.inventory;
+        }
 
         return super.getCapability(capability, facing);
     }
@@ -204,6 +216,12 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
             this.energy.set(((NBTPrimitive) energyTag).getLong());
         }
         this.size = EnergyHatchData.values()[compound.getInteger("hatchSize")];
+
+        this.inventory = IOInventory.deserialize(this, compound.getCompoundTag("items"));
+        this.inventory.setStackLimit(1, POWER_MODULE_SLOT);
+        this.inventory.setListener(this::onPowerModuleInventoryChanged);
+
+        onPowerModuleInventoryChanged(-1);
     }
 
     @Override
@@ -212,6 +230,7 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
 
         compound.setLong("energy", this.energy.get());
         compound.setInteger("hatchSize", this.size.ordinal());
+        compound.setTag("items", this.inventory.writeNBT());
     }
 
     @Override
@@ -279,4 +298,20 @@ public abstract class TileEnergyHatch extends TileColorableMachineComponent impl
         return this.size.maxEnergy;
     }
 
+    public IOInventory getInventory() {
+        return inventory;
+    }
+
+    protected IOInventory buildInventory() {
+        return (IOInventory) new IOInventory(this, new int[0], new int[0]).setMiscSlots(POWER_MODULE_SLOT);
+    }
+
+    public synchronized void onPowerModuleInventoryChanged(int changedSlot) {
+        var stack = this.inventory.getStackInSlot(POWER_MODULE_SLOT);
+        if (!stack.isEmpty() && stack.getItem() instanceof ItemEnergyPowerModule) {
+            this.size = EnergyHatchData.values()[stack.getMetadata()];
+        } else {
+            this.size = EMPTY;
+        }
+    }
 }

@@ -15,7 +15,6 @@ import com.brandon3055.draconicevolution.blocks.tileentity.TileEnergyStorageCore
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IEnergyContainer;
 import hellfirepvp.modularmachinery.common.base.Mods;
-import hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData;
 import hellfirepvp.modularmachinery.common.data.Config;
 import hellfirepvp.modularmachinery.common.integration.IntegrationIC2EventHandlerHelper;
 import hellfirepvp.modularmachinery.common.machine.IOType;
@@ -48,10 +47,7 @@ import static hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData.ena
 public class TileEnergyOutputHatch extends TileEnergyHatch implements IEnergySource {
 
     public TileEnergyOutputHatch() {
-    }
-
-    public TileEnergyOutputHatch(EnergyHatchData size) {
-        super(size, IOType.OUTPUT);
+        super(IOType.OUTPUT);
     }
 
     @Override

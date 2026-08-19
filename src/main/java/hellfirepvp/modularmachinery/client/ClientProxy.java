@@ -66,6 +66,7 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import net.voidstudio.mmce.common.item.ItemVariant;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
@@ -121,12 +122,23 @@ public class ClientProxy extends CommonProxy {
     }
 
     private static void registryItemModel(final Item item, final String name) {
-        NonNullList<ItemStack> list = NonNullList.create();
-        item.getSubItems(item.getCreativeTab(), list);
-        if (!list.isEmpty()) {
-            for (ItemStack i : list) {
-                ModelLoader.setCustomModelResourceLocation(item, i.getItemDamage(),
-                        new ModelResourceLocation(ModularMachinery.MODID + ":" + name, "inventory"));
+        if (item.getHasSubtypes()) {
+            NonNullList<ItemStack> list = NonNullList.create();
+            item.getSubItems(item.getCreativeTab(), list);
+
+            if (item instanceof ItemVariant itemVariant) {
+                for (ItemStack i : list) {
+                    ModelLoader.setCustomModelResourceLocation(item, i.getItemDamage(),
+                            new ModelResourceLocation(new ResourceLocation(
+                                    ModularMachinery.MODID,
+                                    name + "_" + itemVariant.getVariantName(i.getMetadata())),
+                                    "inventory"));
+                }
+            } else {
+                for (ItemStack i : list) {
+                    ModelLoader.setCustomModelResourceLocation(item, i.getItemDamage(),
+                            new ModelResourceLocation(ModularMachinery.MODID + ":" + name, "inventory"));
+                }
             }
         } else {
             ModelLoader.setCustomModelResourceLocation(item, 0,

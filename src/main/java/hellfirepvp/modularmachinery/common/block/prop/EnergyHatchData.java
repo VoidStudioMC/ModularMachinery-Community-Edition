@@ -30,6 +30,7 @@ import static hellfirepvp.modularmachinery.common.base.Mods.GREGTECH;
  */
 public enum EnergyHatchData implements IStringSerializable {
 
+    EMPTY(      0,       0, 0,      0, 0),
     TINY(       2048,    1, 128,    1, 2),
     SMALL(      4096,    2, 512,    2, 2),
     NORMAL(     8192,    2, 512,    2, 2),
@@ -66,6 +67,10 @@ public enum EnergyHatchData implements IStringSerializable {
 
     public static void loadFromConfig(Configuration cfg) {
         for (EnergyHatchData size : values()) {
+            if (size == EMPTY) {
+                continue;
+            }
+
             size.maxEnergy = cfg.get("energyhatch.size", size.name().toUpperCase(), String.valueOf(size.defaultConfigurationEnergy), "Energy storage size of the energy hatch. [range: 0 ~ 9223372036854775807, default: " + size.defaultConfigurationEnergy + "]").getLong();
             size.maxEnergy = MiscUtils.clamp(size.maxEnergy, 1, Long.MAX_VALUE);
             size.transferLimit = cfg.get("energyhatch.limit", size.name().toUpperCase(), String.valueOf(size.defaultConfigurationTransferLimit), "Defines the transfer limit for RF/FE things. IC2's transfer limit is defined by the voltage tier. [range: 1 ~ 9223372036854775806, default: " + size.defaultConfigurationEnergy + "]").getLong();

@@ -10,7 +10,6 @@ package hellfirepvp.modularmachinery.common.tiles;
 
 import com.brandon3055.draconicevolution.blocks.tileentity.TileEnergyStorageCore;
 import hellfirepvp.modularmachinery.common.base.Mods;
-import hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData;
 import hellfirepvp.modularmachinery.common.integration.IntegrationIC2EventHandlerHelper;
 import hellfirepvp.modularmachinery.common.machine.IOType;
 import hellfirepvp.modularmachinery.common.machine.MachineComponent;
@@ -37,11 +36,9 @@ import static hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData.ena
  */
 @Optional.Interface(iface = "ic2.api.energy.tile.IEnergySink", modid = "ic2")
 public class TileEnergyInputHatch extends TileEnergyHatch implements IEnergySink {
-    public TileEnergyInputHatch() {
-    }
 
-    public TileEnergyInputHatch(EnergyHatchData size) {
-        super(size, IOType.INPUT);
+    public TileEnergyInputHatch() {
+        super(IOType.INPUT);
     }
 
     @Override

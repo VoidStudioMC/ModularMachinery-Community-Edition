@@ -260,21 +260,17 @@ tooltip.fluidhatch.tank.info=Содержит %s mb
 tooltip.fluidhatch.tank.mek=Принимает газы Mekanism
 
 tooltip.energyhatch.charge=%s / %s %s
-tooltip.energyhatch.storage=Содержит %s FE
-tooltip.energyhatch.out.transfer=Передаёт %s FE в Тик
-tooltip.energyhatch.in.accept=Принимает %s FE в Тик
+tooltip.energyhatch.storage=Ёмкость: §a%s FE
+tooltip.energyhatch.limit=Лимит передачи: §b%s FE/t
 
 tooltip.energyhatch.ic2.powerrate=EU/t
 tooltip.energyhatch.ic2.any=Любой
-tooltip.energyhatch.ic2.out.voltage=Выходное Напряжение EU: %s
-tooltip.energyhatch.ic2.out.transfer=Выходная Передача EU: %s %s
-tooltip.energyhatch.ic2.in.voltage=Входное Напряжение EU: %s
-tooltip.energyhatch.ic2.in.transfer=Входная Передача EU: %s %s
+tooltip.energyhatch.ic2.voltage=Напряжение EU: %s
+tooltip.energyhatch.ic2.transfer=Лимит передачи EU: §9%s §9%s
 
-tooltip.energyhatch.gregtech.voltage.in=Входное напряжение: §a%s §7(§a%s§7)
-tooltip.energyhatch.gregtech.voltage.out=Выходное напряжение: §a%s §7(§a%s§7)
+tooltip.energyhatch.gregtech.voltage=Напряжение: §a%s §7(§a%s§7)
 tooltip.energyhatch.gregtech.amperage=Сила тока: §e%s
-tooltip.energyhatch.gregtech.storage=Внутрренняя ёмкость энергии: §9%s
+tooltip.energyhatch.gregtech.storage=Внутренняя ёмкость энергии: §9%s
 
 tooltip.ic2.powertier.0.name=ULV
 tooltip.ic2.powertier.1.name=LV
@@ -296,6 +292,20 @@ item.modularmachinery.itemblueprint.name=Чертёж механизма
 item.modularmachinery.itemmodularium.name=Модуляриум
 item.modularmachinery.itemconstructtool.name=Инструмент выбора конструкции
 item.modularmachinery.machine_projector.name=Проектор мультиблочной структуры
+
+item.modularmachinery.energy_power_module.tiny.name=Крошечный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.small.name=Маленький Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.normal.name=Нормальный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.reinforced.name=Укреплённый Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.big.name=Большой Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.huge.name=Огромный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.ludicrous.name=Громадный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.ultimate.name=Гигантский Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.enormous.name=Гибридный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.immeasurable.name=Квантовый Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.incredible.name=Ультимативный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.maximum.name=Максимальный Энергетический Силовой Модуль
+item.modularmachinery.energy_power_module.infinity.name=Бесконечный Энергетический Силовой Модуль
 
 block.modularmachinery.crushing_wheels.name=Дробильные колеса
 
@@ -356,33 +366,9 @@ tile.modularmachinery.blockfluidoutputhatch.huge.name=Огромный Жидк�
 tile.modularmachinery.blockfluidoutputhatch.ludicrous.name=Гигантский Жидкостный Выходной Шлюз
 tile.modularmachinery.blockfluidoutputhatch.vacuum.name=Ультимативный Жидкостный Выходной Шлюз
 
-tile.modularmachinery.blockenergyinputhatch.tiny.name=Крошечный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.small.name=Маленький Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.normal.name=Нормальный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.reinforced.name=Укреплённый Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.big.name=Большой Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.huge.name=Огромный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.ludicrous.name=Громадный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.ultimate.name=Гигантский Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.enormous.name=Гибридный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.immeasurable.name=Квантовый Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.incredible.name=Ультимативный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.maximum.name=Максимальный Энергетический Входной Шлюз
-tile.modularmachinery.blockenergyinputhatch.infinity.name=Бесконечный Энергетический Входной Шлюз
+tile.modularmachinery.blockenergyinputhatch.name=Энергетический Входной Шлюз
 
-tile.modularmachinery.blockenergyoutputhatch.tiny.name=Крошечный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.small.name=Маленький Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.normal.name=Нормальный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.reinforced.name=Укреплённый Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.big.name=Большой Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.huge.name=Огромный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.ludicrous.name=Громадный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.ultimate.name=Гигантский Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.enormous.name=Гибридный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.immeasurable.name=Квантовый Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.incredible.name=Ультимативный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.maximum.name=Максимальный Энергетический Выходной Шлюз
-tile.modularmachinery.blockenergyoutputhatch.infinity.name=Бесконечный Энергетический Выходной Шлюз
+tile.modularmachinery.blockenergyoutputhatch.name=Энергетический Выходной Шлюз
 
 tile.modularmachinery.blocksmartinterface.number.name=Смарт Интерфейс Данных (Число)
 tile.modularmachinery.blocksmartinterface.string.name=Смарт Интерфейс Данных (Строка)

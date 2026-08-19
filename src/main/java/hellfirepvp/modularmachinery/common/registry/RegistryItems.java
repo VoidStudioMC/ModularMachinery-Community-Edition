@@ -12,6 +12,7 @@ import hellfirepvp.modularmachinery.ModularMachinery;
 import hellfirepvp.modularmachinery.common.CommonProxy;
 import hellfirepvp.modularmachinery.common.item.*;
 import net.minecraft.item.Item;
+import net.voidstudio.mmce.common.item.ItemEnergyPowerModule;
 import youyihj.mmce.common.item.MachineProjector;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class RegistryItems {
         modularium = prepareRegister(new ItemModularium());
         constructTool = prepareRegister(new ItemConstructTool());
         prepareRegisterWithCustomName(MachineProjector.INSTANCE);
+        prepareRegisterWithCustomName(ItemEnergyPowerModule.INSTANCE);
 
         registerItemBlocks();
         registerItemModels();
