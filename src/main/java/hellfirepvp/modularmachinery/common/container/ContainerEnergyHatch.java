@@ -9,6 +9,7 @@
 package hellfirepvp.modularmachinery.common.container;
 
 import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatch;
+import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatchBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -25,11 +26,11 @@ import javax.annotation.Nonnull;
  * Created by HellFirePvP
  * Date: 09.07.2017 / 14:26
  */
-public class ContainerEnergyHatch extends ContainerBase<TileEnergyHatch> {
+public class ContainerEnergyHatch extends ContainerBase<TileEnergyHatchBase> {
 
     private final Slot slotPowerModule;
 
-    public ContainerEnergyHatch(TileEnergyHatch owner, EntityPlayer opening) {
+    public ContainerEnergyHatch(TileEnergyHatchBase owner, EntityPlayer opening) {
         super(owner, opening);
 
         this.slotPowerModule = addSlotToContainer(new SlotPowerModule(

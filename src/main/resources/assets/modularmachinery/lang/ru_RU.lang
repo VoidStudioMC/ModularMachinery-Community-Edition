@@ -272,6 +272,10 @@ tooltip.energyhatch.gregtech.voltage=Напряжение: §a%s §7(§a%s§7)
 tooltip.energyhatch.gregtech.amperage=Сила тока: §e%s
 tooltip.energyhatch.gregtech.storage=Внутренняя ёмкость энергии: §9%s
 
+tooltip.energyhatch.info=Требует энергетический силовой модуль для работы
+tooltip.fluxenergyinputhatch.info=Забирает энергию из вашей сети §3Flux Network
+tooltip.fluxenergyoutputhatch.info=Добавляет энергию в вашу сеть §3Flux Network
+
 tooltip.ic2.powertier.0.name=ULV
 tooltip.ic2.powertier.1.name=LV
 tooltip.ic2.powertier.2.name=MV
@@ -385,5 +389,8 @@ tile.modularmachinery.blockmeiteminputbus.name=МЭ Шина Входа
 tile.modularmachinery.blockmefluidoutputbus.name=МЭ Жидкостный Выходной Шлюз
 tile.modularmachinery.blockmefluidinputbus.name=МЭ Жидкостный Входной Шлюз
 tile.modularmachinery.blockmepatternprovider.name=МЭ Шина Шаблонов
+
+tile.modularmachinery.blockfluxenergyinputhatch.name=Флаксовый Входной Шлюз
+tile.modularmachinery.blockfluxenergyoutputhatch.name=Флаксовый Выходной Шлюз
 
 tooltip.modularcontroller.machine_projector=Shift+ПКМ по контроллеру, чтобы спроецировать его план постройки в мире

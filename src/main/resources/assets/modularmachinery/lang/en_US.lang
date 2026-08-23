@@ -275,6 +275,10 @@ tooltip.energyhatch.gregtech.voltage=Voltage: §a%s §7(§a%s§7)
 tooltip.energyhatch.gregtech.amperage=Amperage: §e%s
 tooltip.energyhatch.gregtech.storage=Internal Energy Capacity: §9%s
 
+tooltip.energyhatch.info=Require energy power module to work
+tooltip.fluxenergyinputhatch.info=Provides energy to machine, removing energy from your §3Flux Network
+tooltip.fluxenergyoutputhatch.info=Receives energy from machine, adding energy to your §3Flux Network
+
 tooltip.ic2.powertier.0.name=ULV
 tooltip.ic2.powertier.1.name=LV
 tooltip.ic2.powertier.2.name=MV
@@ -446,6 +450,8 @@ tile.modularmachinery.blockmanaproviderinput.name=Mana Input Hatch
 tile.modularmachinery.blockmanaprovideroutput.name=Mana Output Hatch
 tile.modularmachinery.blockimpetusproviderinput.name=Impetus Input Hatch
 tile.modularmachinery.blockimpetusprovideroutput.name=Impetus Output Hatch
+tile.modularmachinery.blockfluxenergyinputhatch.name=Flux Input Hatch
+tile.modularmachinery.blockfluxenergyoutputhatch.name=Flux Output Hatch
 
 
 tooltip.modularcontroller.machine_projector=Right-click on the controller while crouching to project the blueprint of his machine into the world.

@@ -1,0 +1,9 @@
+{
+    "defaults": {
+        "model": "modularmachinery:blockfluxenergyinputhatch"
+    },
+    "variants": {
+        "inventory": { "model": "modularmachinery:blockfluxenergyinputhatch" },
+        "normal": { "model": "modularmachinery:blockfluxenergyinputhatch"}
+    }
+}

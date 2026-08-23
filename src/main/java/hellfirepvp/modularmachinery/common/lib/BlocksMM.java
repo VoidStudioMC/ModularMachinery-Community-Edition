@@ -11,6 +11,8 @@ package hellfirepvp.modularmachinery.common.lib;
 import github.kasuminova.mmce.common.block.appeng.*;
 import hellfirepvp.modularmachinery.common.block.*;
 import kport.modularmagic.common.block.*;
+import net.voidstudio.mmce.common.block.BlockFluxEnergyInputHatch;
+import net.voidstudio.mmce.common.block.BlockFluxEnergyOutputHatch;
 
 /**
  * This class is part of the Modular Machinery Mod
@@ -72,4 +74,7 @@ public class BlocksMM {
 
     public static BlockAspectProviderInput blockAspectProviderInput;
     public static BlockAspectProviderOutput blockAspectProviderOutput;
+
+    public static BlockFluxEnergyInputHatch fluxEnergyInputHatch;
+    public static BlockFluxEnergyOutputHatch fluxEnergyOutputHatch;
 }

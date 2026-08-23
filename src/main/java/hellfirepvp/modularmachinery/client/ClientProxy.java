@@ -66,7 +66,9 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import net.voidstudio.mmce.client.gui.GuiContainerFluxEnergyHatch;
 import net.voidstudio.mmce.common.item.ItemVariant;
+import net.voidstudio.mmce.common.tiles.base.TileFluxEnergyHatch;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
@@ -347,6 +349,12 @@ public class ClientProxy extends CommonProxy {
                     return null;
                 }
                 return new GuiContainerLifeEssence((TileLifeEssenceProvider) present, player);
+            }
+            case FLUX_ENERGY_HATCH -> {
+                if (!Mods.FLUX_NETWORKS.isPresent()) {
+                    return null;
+                }
+                return new GuiContainerFluxEnergyHatch((TileFluxEnergyHatch) present, player);
             }
         }
 

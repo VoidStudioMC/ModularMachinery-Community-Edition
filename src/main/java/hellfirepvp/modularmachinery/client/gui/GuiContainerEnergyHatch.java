@@ -14,7 +14,7 @@ import hellfirepvp.modularmachinery.client.util.EnergyDisplayUtil;
 import hellfirepvp.modularmachinery.common.base.Mods;
 import hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData;
 import hellfirepvp.modularmachinery.common.container.ContainerEnergyHatch;
-import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatch;
+import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatchBase;
 import hellfirepvp.modularmachinery.common.util.MiscUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -38,9 +38,14 @@ public class GuiContainerEnergyHatch extends GuiContainerBase<ContainerEnergyHat
 
     public static final ResourceLocation TEXTURES_ENERGY_HATCH = new ResourceLocation(ModularMachinery.MODID, "textures/gui/energyhatch.png");
 
-    private final TileEnergyHatch energyHatch;
+    protected final TileEnergyHatchBase energyHatch;
 
-    public GuiContainerEnergyHatch(TileEnergyHatch tileFluidTank, EntityPlayer opening) {
+    protected GuiContainerEnergyHatch(ContainerEnergyHatch container) {
+        super(container);
+        this.energyHatch = container.getOwner();
+    }
+
+    public GuiContainerEnergyHatch(TileEnergyHatchBase tileFluidTank, EntityPlayer opening) {
         super(new ContainerEnergyHatch(tileFluidTank, opening));
         this.energyHatch = tileFluidTank;
     }

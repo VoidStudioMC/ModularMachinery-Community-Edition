@@ -8,7 +8,7 @@
 
 package hellfirepvp.modularmachinery.common.util;
 
-import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatch;
+import hellfirepvp.modularmachinery.common.tiles.base.TileEnergyHatchBase;
 import hellfirepvp.modularmachinery.common.tiles.base.TileFluidTank;
 import hellfirepvp.modularmachinery.common.tiles.base.TileInventory;
 import net.minecraft.tileentity.TileEntity;
@@ -34,7 +34,7 @@ public class RedstoneHelper {
             float cap = tank.getCapacity();
             float cur = tank.getFluidAmount();
             return MathHelper.clamp(Math.round(15F * (cur / cap)), 0, 15);
-        } else if (sync instanceof TileEnergyHatch) {
+        } else if (sync instanceof TileEnergyHatchBase) {
             double cap = ((IEnergyHandler) sync).getMaxEnergy();
             double cur = ((IEnergyHandler) sync).getCurrentEnergy();
             return MathHelper.clamp(Math.round(15F * (float) (cur / cap)), 0, 15);

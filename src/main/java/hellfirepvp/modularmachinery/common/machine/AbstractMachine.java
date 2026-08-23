@@ -68,6 +68,10 @@ public abstract class AbstractMachine {
                 localizedName != null ? localizedName : localizationKey;
     }
 
+    public String getRawLocalizedName() {
+        return localizedName;
+    }
+
     public void setLocalizedName(String localizedName) {
         this.localizedName = localizedName;
     }

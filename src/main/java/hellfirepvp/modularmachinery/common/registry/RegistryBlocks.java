@@ -35,6 +35,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.voidstudio.mmce.common.block.BlockFluxEnergyInputHatch;
+import net.voidstudio.mmce.common.block.BlockFluxEnergyOutputHatch;
+import net.voidstudio.mmce.common.tiles.TileFluxEnergyInputHatch;
+import net.voidstudio.mmce.common.tiles.TileFluxEnergyOutputHatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -194,6 +198,14 @@ public class RegistryBlocks {
             prepareItemBlockRegister(blockManaProviderInput);
             prepareItemBlockRegister(blockManaProviderOutput);
         }
+
+        if (Mods.FLUX_NETWORKS.isPresent()) {
+            fluxEnergyInputHatch = prepareRegister(new BlockFluxEnergyInputHatch());
+            fluxEnergyOutputHatch = prepareRegister(new BlockFluxEnergyOutputHatch());
+
+            prepareItemBlockRegister(fluxEnergyInputHatch);
+            prepareItemBlockRegister(fluxEnergyOutputHatch);
+        }
     }
 
     private static void registerTiles() {
@@ -255,6 +267,10 @@ public class RegistryBlocks {
         if (Mods.TA.isPresent()) {
             GameRegistry.registerTileEntity(TileImpetusComponent.Input.class, new ResourceLocation(ModularMachinery.MODID, "impetusinput"));
             GameRegistry.registerTileEntity(TileImpetusComponent.Output.class, new ResourceLocation(ModularMachinery.MODID, "impetusoutput"));
+        }
+        if (Mods.FLUX_NETWORKS.isPresent()) {
+            registerTileWithModID(TileFluxEnergyInputHatch.class);
+            registerTileWithModID(TileFluxEnergyOutputHatch.class);
         }
     }
 

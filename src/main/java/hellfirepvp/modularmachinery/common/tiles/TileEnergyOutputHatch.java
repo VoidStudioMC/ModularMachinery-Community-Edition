@@ -45,6 +45,7 @@ import static hellfirepvp.modularmachinery.common.block.prop.EnergyHatchData.ena
  */
 @Optional.Interface(iface = "ic2.api.energy.tile.IEnergySource", modid = "ic2")
 public class TileEnergyOutputHatch extends TileEnergyHatch implements IEnergySource {
+    protected long maxCanExtractTick;
 
     public TileEnergyOutputHatch() {
         super(IOType.OUTPUT);
@@ -74,46 +75,46 @@ public class TileEnergyOutputHatch extends TileEnergyHatch implements IEnergySou
         }
 
         long prevEnergy = this.energy.get();
-        long maxCanExtract = Math.min(this.size.transferLimit, this.energy.get());
-        if (maxCanExtract <= 0) {
+        maxCanExtractTick = Math.min(this.size.transferLimit, this.energy.get());
+        if (maxCanExtractTick <= 0) {
             return;
         }
 
         // DE Transfer
         if (Mods.DRACONICEVOLUTION.isPresent() && enableDEIntegration) {
-            long transferred = attemptDECoreTransfer(maxCanExtract);
-            maxCanExtract -= transferred;
+            long transferred = attemptDECoreTransfer(maxCanExtractTick);
+            maxCanExtractTick -= transferred;
             this.energy.addAndGet(-transferred);
         }
 
-        long usableAmps = Mods.GREGTECH.isPresent() ? Math.min(this.size.getGtAmperage(), maxCanExtract / 4L / this.size.getGTEnergyTransferVoltage()) : 0;
+        long usableAmps = Mods.GREGTECH.isPresent() ? Math.min(this.size.getGtAmperage(), maxCanExtractTick / 4L / this.size.getGTEnergyTransferVoltage()) : 0;
         for (EnumFacing face : EnumFacing.VALUES) {
             // FluxNetworks Transfer
-            if (maxCanExtract > 0 && Mods.FLUX_NETWORKS.isPresent() && Config.enableFluxNetworksIntegration) {
-                long transferred = attemptFluxNetworksTransfer(face, maxCanExtract);
+            if (maxCanExtractTick > 0 && Mods.FLUX_NETWORKS.isPresent() && Config.enableFluxNetworksIntegration) {
+                long transferred = attemptFluxNetworksTransfer(face, maxCanExtractTick);
                 this.energy.addAndGet(-transferred);
-                maxCanExtract -= transferred;
+                maxCanExtractTick -= transferred;
             }
             // GT Transfer
-            if (maxCanExtract > 0 && Mods.GREGTECH.isPresent() && usableAmps > 0) {
-                long totalTransferred = attemptGTTransfer(face, maxCanExtract / 4L, usableAmps) * 4L;
+            if (maxCanExtractTick > 0 && Mods.GREGTECH.isPresent() && usableAmps > 0) {
+                long totalTransferred = attemptGTTransfer(face, maxCanExtractTick / 4L, usableAmps) * 4L;
                 usableAmps -= totalTransferred / 4L / this.size.getGTEnergyTransferVoltage();
-                maxCanExtract -= totalTransferred;
+                maxCanExtractTick -= totalTransferred;
                 this.energy.addAndGet(-totalTransferred);
             }
             // FE / RF Transfer
-            if (maxCanExtract > 0) {
+            if (maxCanExtractTick > 0) {
                 int transferred;
 
                 if (Mods.REDSTONEFLUXAPI.isPresent()) {
-                    transferred = attemptFERFTransfer(face, convertDownEnergy(maxCanExtract));
+                    transferred = attemptFERFTransfer(face, convertDownEnergy(maxCanExtractTick));
                 } else {
-                    transferred = attemptFETransfer(face, convertDownEnergy(maxCanExtract));
+                    transferred = attemptFETransfer(face, convertDownEnergy(maxCanExtractTick));
                 }
-                maxCanExtract -= transferred;
+                maxCanExtractTick -= transferred;
                 this.energy.addAndGet(-transferred);
             }
-            if (maxCanExtract <= 0) {
+            if (maxCanExtractTick <= 0) {
                 break;
             }
         }
@@ -249,13 +250,16 @@ public class TileEnergyOutputHatch extends TileEnergyHatch implements IEnergySou
     @Override
     @Optional.Method(modid = "ic2")
     public double getOfferedEnergy() {
-        return Math.min(this.size.getIC2EnergyTransmission(), this.getCurrentEnergy() / 4L);
+        return Math.min(this.size.getIC2EnergyTransmission(),
+                Math.min(this.getCurrentEnergy() / 4L, maxCanExtractTick / 4L));
     }
 
     @Override
     @Optional.Method(modid = "ic2")
     public void drawEnergy(double amount) {
-        this.energy.set(MiscUtils.clamp(this.energy.get() - (MathHelper.lfloor(amount) * 4L), 0, this.size.maxEnergy));
+        long energy = MathHelper.lfloor(amount) * 4L;
+        this.energy.set(MiscUtils.clamp(this.energy.get() - energy, 0, this.size.maxEnergy));
+        maxCanExtractTick -= energy;
         markNoUpdateSync();
     }
 

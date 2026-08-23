@@ -63,6 +63,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.voidstudio.mmce.common.container.ContainerFluxEnergyHatch;
+import net.voidstudio.mmce.common.tiles.base.TileFluxEnergyHatch;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -279,6 +281,12 @@ public class CommonProxy implements IGuiHandler {
                 }
                 return new ContainerLifeEssence((TileLifeEssenceProvider) present, player);
             }
+            case FLUX_ENERGY_HATCH -> {
+                if (!Mods.FLUX_NETWORKS.isPresent()) {
+                    return null;
+                }
+                return new ContainerFluxEnergyHatch((TileFluxEnergyHatch) present, player);
+            }
         }
 
         return null;
@@ -309,6 +317,7 @@ public class CommonProxy implements IGuiHandler {
         ME_GAS_INPUT_BUS(Mods.AE2EL.isPresent() && Mods.MEKENG.isPresent() ? MEGasInputBus.class : null),
         ME_PATTERN_PROVIDER(Mods.AE2.isPresent() ? MEPatternProvider.class : null),
         GUI_ESSENCE_PROVIDER(Mods.BM2.isPresent() ? TileLifeEssenceProvider.class : null),
+        FLUX_ENERGY_HATCH(Mods.FLUX_NETWORKS.isPresent() ? TileFluxEnergyHatch.class : null),
         ;
 
         public final Class<? extends TileEntity> requiredTileEntity;
