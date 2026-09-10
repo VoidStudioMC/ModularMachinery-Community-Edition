@@ -334,23 +334,6 @@ public interface IMachineController {
     @Nullable
     @ZenGetter("ownerUUID")
     String getOwnerUUIDString();
-    /**
-     * Sets the additional parallelism value for this machine.
-     * This value will be added to the internal parallelism when calculating the total parallelism.
-     *
-     * @param additionalParallelism the new additional parallelism value
-     */
-    @ZenSetter("additionalParallelism")
-    void setAdditionalParallelism(int additionalParallelism);
-
-    /**
-     * Gets the additional parallelism value for this machine.
-     * This value represents extra parallelism provided by external sources.
-     *
-     * @return the additional parallelism value
-     */
-    @ZenGetter("additionalParallelism")
-    int getAdditionalParallelism();
 
     TileMultiblockMachineController getController();
 }
