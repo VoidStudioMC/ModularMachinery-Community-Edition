@@ -27,7 +27,6 @@ import github.kasuminova.mmce.common.machine.component.MachineComponentProxyRegi
 import github.kasuminova.mmce.common.upgrade.MachineUpgrade;
 import github.kasuminova.mmce.common.upgrade.UpgradeType;
 import github.kasuminova.mmce.common.util.DynamicPattern;
-import github.kasuminova.mmce.common.util.InfItemFluidHandler;
 import github.kasuminova.mmce.common.util.Sides;
 import github.kasuminova.mmce.common.util.TimeRecorder;
 import github.kasuminova.mmce.common.util.concurrent.ActionExecutor;
@@ -46,14 +45,23 @@ import hellfirepvp.modularmachinery.common.crafting.helper.CraftingStatus;
 import hellfirepvp.modularmachinery.common.crafting.helper.ProcessingComponent;
 import hellfirepvp.modularmachinery.common.crafting.helper.RecipeCraftingContext;
 import hellfirepvp.modularmachinery.common.item.ItemBlueprint;
-import hellfirepvp.modularmachinery.common.machine.*;
+import hellfirepvp.modularmachinery.common.machine.DynamicMachine;
+import hellfirepvp.modularmachinery.common.machine.MachineComponent;
+import hellfirepvp.modularmachinery.common.machine.MachineRegistry;
+import hellfirepvp.modularmachinery.common.machine.TaggedPositionBlockArray;
 import hellfirepvp.modularmachinery.common.modifier.MultiBlockModifierReplacement;
 import hellfirepvp.modularmachinery.common.modifier.RecipeModifier;
 import hellfirepvp.modularmachinery.common.modifier.SingleBlockModifierReplacement;
 import hellfirepvp.modularmachinery.common.tiles.TileParallelController;
 import hellfirepvp.modularmachinery.common.tiles.TileSmartInterface;
 import hellfirepvp.modularmachinery.common.tiles.TileUpgradeBus;
-import hellfirepvp.modularmachinery.common.util.*;
+import hellfirepvp.modularmachinery.common.util.BlockArray;
+import hellfirepvp.modularmachinery.common.util.BlockArrayCache;
+import hellfirepvp.modularmachinery.common.util.EmptinessCheckable;
+import hellfirepvp.modularmachinery.common.util.IOInventory;
+import hellfirepvp.modularmachinery.common.util.MiscUtils;
+import hellfirepvp.modularmachinery.common.util.SmartInterfaceData;
+import hellfirepvp.modularmachinery.common.util.SmartInterfaceType;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -91,12 +99,17 @@ import stanhebben.zenscript.annotations.ZenMethod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SuppressWarnings("unused")
@@ -159,6 +172,8 @@ public abstract class TileMultiblockMachineController extends TileEntityRestrict
     protected boolean loaded = false;
 
     protected InputMode inputMode = InputMode.DEFAULT;
+
+    protected int additionalParallelism;
 
     public TileMultiblockMachineController() {
         this.inventory = buildInventory();
@@ -264,9 +279,29 @@ public abstract class TileMultiblockMachineController extends TileEntityRestrict
         this.searchRecipeImmediately = searchRecipeImmediately;
     }
 
+    @Override
+    public void setAdditionalParallelism(int additionalParallelism) {
+        this.additionalParallelism = additionalParallelism;
+    }
+
+    @Override
+    public int getAdditionalParallelism() {
+        return this.additionalParallelism;
+    }
+
+    @Override
+    public int getControllersParallelism() {
+        int parallelism = 0;
+        for (TileParallelController.ParallelControllerProvider provider : foundParallelControllers) {
+            parallelism += provider.getParallelism();
+        }
+        return parallelism;
+    }
+
     public int getMaxParallelism() {
         int parallelism = foundMachine.getInternalParallelism();
         int maxParallelism = foundMachine.getMaxParallelism();
+        parallelism += additionalParallelism;
         for (TileParallelController.ParallelControllerProvider provider : foundParallelControllers) {
             parallelism += provider.getParallelism();
 
@@ -1388,6 +1423,10 @@ public abstract class TileMultiblockMachineController extends TileEntityRestrict
             this.inputMode = InputMode.values()[compound.getByte("inputMode")];
         }
 
+        if (compound.hasKey("additionalParallelism")) {
+            this.additionalParallelism = compound.getInteger("additionalParallelism");
+        }
+
         if (Sides.isRunningOnClient()) {
             processClientGUIUpdate();
         }
@@ -1441,6 +1480,7 @@ public abstract class TileMultiblockMachineController extends TileEntityRestrict
             }
         }
         compound.setByte("inputMode", (byte) inputMode.ordinal());
+        compound.setInteger("additionalParallelism", additionalParallelism);
     }
 
     protected void readMachineNBT(NBTTagCompound compound) {
