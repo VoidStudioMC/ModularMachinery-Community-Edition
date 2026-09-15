@@ -5,7 +5,6 @@ import hellfirepvp.modularmachinery.common.CommonProxy;
 import hellfirepvp.modularmachinery.common.block.BlockEnergyHatch;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -88,18 +87,8 @@ public abstract class BlockFluxEnergyHatch extends BlockEnergyHatch {
 
         if (tile instanceof TileFluxEnergyHatch hatch) {
             if (hatch.canAccess(player)) {
-                ItemStack stack = new ItemStack(this, 1, damageDropped(state));
-
-                float motion = 0.7F;
-                double motionX = (world.rand.nextFloat() * motion) + (1.0F - motion) * 0.5D;
-                double motionY = (world.rand.nextFloat() * motion) + (1.0F - motion) * 0.5D;
-                double motionZ = (world.rand.nextFloat() * motion) + (1.0F - motion) * 0.5D;
-
-                EntityItem entityItem = new EntityItem(world, pos.getX() + motionX, pos.getY() + motionY, pos.getZ() + motionZ, stack);
-
                 onBlockHarvested(world, pos, state, player);
                 world.setBlockToAir(pos);
-                world.spawnEntity(entityItem);
                 return true;
             }
         }

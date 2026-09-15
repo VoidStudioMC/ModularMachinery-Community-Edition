@@ -518,7 +518,7 @@ public abstract class TileFluxEnergyHatch extends TileEnergyHatchBase implements
         }
 
         private void updateMaxTransfer(long transferred) {
-            maxTransfer = Math.min(0, maxTransfer - transferred);
+            maxTransfer = Math.max(0, maxTransfer - transferred);
         }
     }
 }
