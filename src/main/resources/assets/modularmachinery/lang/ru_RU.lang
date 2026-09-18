@@ -262,6 +262,7 @@ tooltip.fluidhatch.tank.mek=Принимает газы Mekanism
 tooltip.energyhatch.charge=%s / %s %s
 tooltip.energyhatch.storage=Ёмкость: §a%s FE
 tooltip.energyhatch.limit=Лимит передачи: §b%s FE/t
+tooltip.energyhatch.power_module_miss=§cОтсутствует силовой модуль!
 
 tooltip.energyhatch.ic2.powerrate=EU/t
 tooltip.energyhatch.ic2.any=Любой

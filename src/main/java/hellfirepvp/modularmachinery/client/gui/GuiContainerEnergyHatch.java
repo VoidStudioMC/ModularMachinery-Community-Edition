@@ -102,6 +102,11 @@ public class GuiContainerEnergyHatch extends GuiContainerBase<ContainerEnergyHat
         int offsetY = 12;
         var size = energyHatch.getTier();
         List<String> text = Lists.newArrayList();
+
+        if (energyHatch.getInventory().getStackInSlot(TileEnergyHatchBase.POWER_MODULE_SLOT).isEmpty()) {
+            text.add(I18n.format("tooltip.energyhatch.power_module_miss"));
+        }
+
         if (EnergyDisplayUtil.displayFETooltip) {
             text.add(I18n.format("tooltip.energyhatch.storage", MiscUtils.formatNumber(size.maxEnergy)));
             text.add(I18n.format("tooltip.energyhatch.limit", MiscUtils.formatNumber(size.transferLimit)));

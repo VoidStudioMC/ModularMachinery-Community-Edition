@@ -265,6 +265,7 @@ tooltip.fluidhatch.tank.mek=Accepts Mekanism Gas
 tooltip.energyhatch.charge=%s / %s %s
 tooltip.energyhatch.storage=Capacity: §a%s FE
 tooltip.energyhatch.limit=Transfer limit: §b%s FE/t
+tooltip.energyhatch.power_module_miss=§cPower module miss!
 
 tooltip.energyhatch.ic2.powerrate=EU/t
 tooltip.energyhatch.ic2.any=Any
