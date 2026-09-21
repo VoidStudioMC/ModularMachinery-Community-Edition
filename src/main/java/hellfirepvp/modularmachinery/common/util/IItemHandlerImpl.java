@@ -6,19 +6,188 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class IItemHandlerImpl implements IItemHandlerModifiable {
     public static final int DEFAULT_SLOT_LIMIT = 64;
 
-    protected int[] slotLimits = {64}; // Value not present means default, aka 64.
-    protected SlotStackHolder[] inventory = {new SlotStackHolder(0)};
+    private static final int[] NO_SLOTS = new int[0];
+    private static final EnumFacing[] NO_SIDES = new EnumFacing[0];
+
+    protected int[] slotLimits; // Value not present means default, aka 64.
+    protected SlotStackHolder[] inventory;
+
+    // Only recipe snapshots use implicit empty slots. Live IOInventory storage stays dense.
+    private boolean recipeSnapshot;
+    private boolean implicitEmptySlots;
+    private volatile SlotStackHolder[] publishedInventory;
 
     public boolean allowAnySlots = false;
-    public EnumFacing[] accessibleSides = {};
-    protected int[] inSlots = new int[0], outSlots = new int[0], miscSlots = new int[0];
+    public EnumFacing[] accessibleSides = NO_SIDES;
+    protected int[] inSlots = NO_SLOTS, outSlots = NO_SLOTS, miscSlots = NO_SLOTS;
 
     protected IItemHandlerImpl() {
+        slotLimits = new int[]{DEFAULT_SLOT_LIMIT};
+        inventory = new SlotStackHolder[]{new SlotStackHolder(0)};
+    }
+
+    private IItemHandlerImpl(IItemHandlerImpl source, boolean deepCopy) {
+        this(source, deepCopy, false);
+    }
+
+    private IItemHandlerImpl(IItemHandlerImpl source, boolean deepCopy, boolean sparse) {
+        recipeSnapshot = sparse;
+        implicitEmptySlots = sparse;
+        inSlots = source.inSlots;
+        outSlots = source.outSlots;
+        // Keep the existing distinction between deep and shallow copies, including slot access.
+        int slots;
+        if (deepCopy) {
+            accessibleSides = Objects.requireNonNull(source.accessibleSides);
+            slots = Math.max(getArrayMax(inSlots), getArrayMax(outSlots)) + 1;
+            slotLimits = new int[slots];
+            Arrays.fill(slotLimits, DEFAULT_SLOT_LIMIT);
+        } else {
+            miscSlots = source.miscSlots;
+            slots = source.inventoryForRead().length;
+            slotLimits = source.slotLimits;
+        }
+
+        inventory = new SlotStackHolder[slots];
+        boolean hasImplicitEmptySlot = false;
+        for (int i = 0; i < source.inventoryForRead().length; i++) {
+            SlotStackHolder holder = source.holderAt(i);
+            boolean sourceSlotIsImplicitEmpty = false;
+            if (holder == null && source.recipeSnapshot) {
+                // Classify a lazy empty slot atomically with structural materialization.
+                // Do not hold the source lock across ItemStack/capability callbacks.
+                synchronized (source) {
+                    holder = source.holderAt(i);
+                    sourceSlotIsImplicitEmpty = holder == null && source.implicitEmptySlots;
+                }
+            }
+            if (sourceSlotIsImplicitEmpty) {
+                if (!sparse) {
+                    inventory[i] = new SlotStackHolder(i);
+                } else {
+                    hasImplicitEmptySlot = true;
+                }
+            } else if (sparse && holder.getClass() == SlotStackHolder.class && holder.slotId == i) {
+                // Read each stack once, at the same
+                // point as SlotStackHolder.copy(), and eagerly copy all occupied stacks.
+                ItemStack stack = holder.itemStack.get();
+                if (!stack.isEmpty()) {
+                    SlotStackHolder copied = new SlotStackHolder(holder.slotId);
+                    copied.itemStack.set(stack.copy());
+                    inventory[i] = copied;
+                } else {
+                    hasImplicitEmptySlot = true;
+                }
+            } else {
+                if (sparse) {
+                    // Preserve custom holders' virtual copy contract, including null,
+                    // and nonstandard slot IDs. Previously skipped slots become dense.
+                    for (int previous = 0; previous < i; previous++) {
+                        if (inventory[previous] == null) {
+                            inventory[previous] = new SlotStackHolder(previous);
+                        }
+                    }
+                    sparse = false;
+                    recipeSnapshot = false;
+                    implicitEmptySlots = false;
+                }
+                inventory[i] = deepCopy ? holder.copy() : holder.fastCopy();
+            }
+        }
+        for (int i = source.inventoryForRead().length; i < slots; i++) {
+            if (!sparse) {
+                inventory[i] = new SlotStackHolder(i);
+            } else {
+                hasImplicitEmptySlot = true;
+            }
+        }
+        if (deepCopy) {
+            System.arraycopy(source.slotLimits, 0, slotLimits, 0, source.slotLimits.length);
+        }
+        if (sparse && hasImplicitEmptySlot) {
+            publishedInventory = inventory;
+        } else {
+            // A full inventory gains nothing from sparse reads or synchronized writes.
+            recipeSnapshot = false;
+            implicitEmptySlots = false;
+        }
+    }
+
+    /** Internal recipe path; public copy() and custom copy overrides retain dense semantics. */
+    final IItemHandlerImpl copyForRecipe() {
+        if (getClass() != IItemHandlerImpl.class && getClass() != IOInventory.class) {
+            return copy();
+        }
+        SlotStackHolder[] current = inventoryForRead();
+        // A full inventory cannot save holders. This allocation-free hint only selects
+        // the implementation; the constructor still reads each actual snapshot stack.
+        // Reference checks avoid additional ItemStack callbacks or isEmpty() calls.
+        for (SlotStackHolder holder : current) {
+            if (holder == null || holder.itemStack.get() == ItemStack.EMPTY) {
+                int slots = Math.max(getArrayMax(inSlots), getArrayMax(outSlots)) + 1;
+                if (current.length > slots || slotLimits.length > slots) {
+                    return copy();
+                }
+                return new IItemHandlerImpl(this, true, true);
+            }
+        }
+        return copy();
+    }
+
+    private SlotStackHolder[] inventoryForRead() {
+        return recipeSnapshot ? publishedInventory : inventory;
+    }
+
+    private SlotStackHolder holderAt(int slot) {
+        return inventoryForRead()[slot];
+    }
+
+    private SlotStackHolder writableHolderAt(int slot) {
+        SlotStackHolder holder = holderAt(slot);
+        if (holder != null || !recipeSnapshot) {
+            return holder;
+        }
+        synchronized (this) {
+            holder = holderAt(slot);
+            if (holder == null && implicitEmptySlots) {
+                holder = new SlotStackHolder(slot);
+                inventory[slot] = holder;
+                // Publish the newly installed holder. Subsequent stack writes still use
+                // AtomicReference; simultaneous first writers cannot install two holders.
+                publishedInventory = inventory;
+            }
+            return holder;
+        }
+    }
+
+    private void materializeEmptySlots() {
+        if (!recipeSnapshot) {
+            return;
+        }
+        synchronized (this) {
+            if (!implicitEmptySlots) {
+                return;
+            }
+            for (int i = 0; i < inventory.length; i++) {
+                if (inventory[i] == null) {
+                    inventory[i] = new SlotStackHolder(i);
+                }
+            }
+            implicitEmptySlots = false;
+            publishedInventory = inventory;
+        }
+    }
+
+    private void publishInventory() {
+        if (recipeSnapshot) {
+            publishedInventory = inventory;
+        }
     }
 
     public IItemHandlerImpl(int[] inSlots, int[] outSlots) {
@@ -38,11 +207,11 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
             inventory[i] = new SlotStackHolder(i);
         }
 
-        this.accessibleSides = accessibleFrom;
-        System.arraycopy(accessibleFrom, 0,  this.accessibleSides, 0, accessibleFrom.length);
+        this.accessibleSides = Objects.requireNonNull(accessibleFrom);
     }
 
     public IItemHandlerImpl(IItemHandlerModifiable handler) {
+        this.slotLimits = new int[]{DEFAULT_SLOT_LIMIT};
         int slots = handler.getSlots();
         int[] inSlots = new int[slots];
         for (int i = 0; i < slots; i++) {
@@ -72,27 +241,11 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
     }
 
     public IItemHandlerImpl copy() {
-        IItemHandlerImpl copy = new IItemHandlerImpl(inSlots, outSlots, accessibleSides);
-        for (int i = 0; i < inventory.length; i++) {
-            copy.inventory[i] = inventory[i].copy();
-        }
-        System.arraycopy(slotLimits, 0, copy.slotLimits, 0, slotLimits.length);
-        return copy;
+        return new IItemHandlerImpl(this, true);
     }
 
     public IItemHandlerImpl fastCopy() {
-        IItemHandlerImpl copy = new IItemHandlerImpl();
-        copy.inSlots = inSlots;
-        copy.outSlots = outSlots;
-        copy.miscSlots = miscSlots;
-
-        copy.inventory = new SlotStackHolder[inventory.length];
-        for (int i = 0; i < inventory.length; i++) {
-            copy.inventory[i] = inventory[i].fastCopy();
-        }
-
-        copy.slotLimits = slotLimits;
-        return copy;
+        return new IItemHandlerImpl(this, false);
     }
 
     protected static boolean arrayContains(int[] array, int i) {
@@ -107,6 +260,7 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
     }
 
     public IItemHandlerImpl setMiscSlots(int... miscSlots) {
+        materializeEmptySlots();
         this.miscSlots = miscSlots;
 
         int max = getArrayMax(miscSlots);
@@ -116,10 +270,12 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
         for (int slot : miscSlots) {
             this.inventory[slot] = new SlotStackHolder(slot);
         }
+        publishInventory();
         return this;
     }
 
     public IItemHandlerImpl setStackLimit(int limit, int... slots) {
+        materializeEmptySlots();
         int max = getArrayMax(slots);
         checkSlotLimitsLength(max);
         checkInventoryLength(max);
@@ -136,15 +292,15 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
 
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack stack) {
-        if (slot <= -1 || slot >= inventory.length) {
+        if (slot <= -1 || slot >= inventoryForRead().length) {
             return;
         }
-        this.inventory[slot].itemStack.set(stack);
+        writableHolderAt(slot).itemStack.set(stack);
     }
 
     @Override
     public int getSlots() {
-        return inventory.length;
+        return inventoryForRead().length;
     }
 
     @Override
@@ -158,10 +314,10 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
     @Override
     @Nonnull
     public ItemStack getStackInSlot(int slot) {
-        if (slot < 0 || slot >= inventory.length) {
+        if (slot < 0 || slot >= inventoryForRead().length) {
             return ItemStack.EMPTY;
         }
-        SlotStackHolder holder = inventory[slot];
+        SlotStackHolder holder = holderAt(slot);
         if (holder != null) {
             return holder.itemStack.get();
         }
@@ -182,7 +338,7 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
             }
         }
 
-        IItemHandlerImpl.SlotStackHolder holder = this.inventory[slot];
+        IItemHandlerImpl.SlotStackHolder holder = writableHolderAt(slot);
         if (holder == null) {
             return stack; // Shouldn't happen anymore here tho
         }
@@ -236,7 +392,7 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
                 return ItemStack.EMPTY;
             }
         }
-        IItemHandlerImpl.SlotStackHolder holder = this.inventory[slot];
+        IItemHandlerImpl.SlotStackHolder holder = holderAt(slot);
         if (holder == null) {
             return ItemStack.EMPTY; // Shouldn't happen anymore here tho
         }
@@ -255,8 +411,20 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
     }
 
     public void clear() {
-        for (final SlotStackHolder holder : inventory) {
-            holder.itemStack.set(ItemStack.EMPTY);
+        if (recipeSnapshot) {
+            synchronized (this) {
+                clearHolders();
+            }
+        } else {
+            clearHolders();
+        }
+    }
+
+    private void clearHolders() {
+        for (final SlotStackHolder holder : inventoryForRead()) {
+            if (holder != null || !implicitEmptySlots) {
+                holder.itemStack.set(ItemStack.EMPTY);
+            }
         }
     }
 
@@ -292,6 +460,7 @@ public class IItemHandlerImpl implements IItemHandlerModifiable {
             }
             System.arraycopy(inventory, 0, tmp, 0, invLength);
             this.inventory = tmp;
+            publishInventory();
         }
     }
 

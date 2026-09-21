@@ -120,11 +120,18 @@ public class RecipeCraftingContext {
         } else {
             this.activeRecipe = activeRecipe;
         }
-        this.commandSender = new ControllerCommandSender(this.controller);
+        this.commandSender = null;
 
         reset();
         updateComponents(ctrl.getFoundComponents().values());
         return this;
+    }
+
+    private ControllerCommandSender getCommandSender() {
+        if (commandSender == null) {
+            commandSender = new ControllerCommandSender(controller);
+        }
+        return commandSender;
     }
 
     public int getReloadCounter() {
@@ -243,7 +250,7 @@ public class RecipeCraftingContext {
         }
         currentIOTickIndex = 0;
 
-        this.getParentRecipe().getCommandContainer().runTickCommands(this.commandSender, currentTick);
+        this.getParentRecipe().getCommandContainer().runTickCommands(getCommandSender(), currentTick);
 
         return CraftingCheckResult.SUCCESS;
     }
@@ -291,7 +298,7 @@ public class RecipeCraftingContext {
             }
         }
 
-        this.getParentRecipe().getCommandContainer().runStartCommands(this.commandSender);
+        this.getParentRecipe().getCommandContainer().runStartCommands(getCommandSender());
     }
 
     private void startCrafting(final ResultChance chance, final RequirementComponents reqComponents) {
@@ -352,7 +359,7 @@ public class RecipeCraftingContext {
             requirement.endRequirementCheck();
         }
 
-        this.getParentRecipe().getCommandContainer().runFinishCommands(this.commandSender);
+        this.getParentRecipe().getCommandContainer().runFinishCommands(getCommandSender());
     }
 
     public List<RequirementComponents> getAllParallelizableComponents() {
@@ -507,18 +514,44 @@ public class RecipeCraftingContext {
             final TaggedReqCompMap taggedReqCompMap,
             final ComponentRequirement<?, ?> req, final List<ProcessingComponent<?>> compList)
     {
-        List<ProcessingComponent<?>> copiedCompList;
-        if (req.tag != null) {
-            copiedCompList = taggedReqCompMap.computeIfAbsent(
-                    req.actionType, reqTypeMap -> new Object2ObjectArrayMap<>()).computeIfAbsent(
-                    req.requirementType, tagMap -> new Object2ObjectOpenHashMap<>()).computeIfAbsent(
-                            req.tag, comp -> ((ComponentRequirement.MultiComponent) req).copyComponents(compList));
-        } else {
-            copiedCompList = reqCompMap.computeIfAbsent(
-                    req.actionType, reqTypeMap -> new Object2ObjectArrayMap<>()).computeIfAbsent(
-                    req.requirementType, comp -> ((ComponentRequirement.MultiComponent) req).copyComponents(compList));
+        // Keep this cache local to one check. Reusing its inventory copies across checks
+        // would retain simulated consumption and miss changes made by scripts or other threads.
+        ComponentSelectorTag tag = req.tag;
+        if (tag != null) {
+            Object2ObjectArrayMap<RequirementType<?, ?>, Map<ComponentSelectorTag, List<ProcessingComponent<?>>>> byType =
+                    taggedReqCompMap.get(req.actionType);
+            if (byType == null) {
+                byType = new Object2ObjectArrayMap<>();
+                taggedReqCompMap.put(req.actionType, byType);
+            }
+            Map<ComponentSelectorTag, List<ProcessingComponent<?>>> byTag = byType.get(req.requirementType);
+            if (byTag == null) {
+                byTag = new Object2ObjectOpenHashMap<>();
+                byType.put(req.requirementType, byTag);
+            }
+            List<ProcessingComponent<?>> copied = byTag.get(tag);
+            if (copied == null) {
+                copied = ((ComponentRequirement.MultiComponent) req).copyComponents(compList);
+                if (copied != null) {
+                    byTag.put(tag, copied);
+                }
+            }
+            return copied;
         }
-        return copiedCompList;
+
+        Object2ObjectArrayMap<RequirementType<?, ?>, List<ProcessingComponent<?>>> byType = reqCompMap.get(req.actionType);
+        if (byType == null) {
+            byType = new Object2ObjectArrayMap<>();
+            reqCompMap.put(req.actionType, byType);
+        }
+        List<ProcessingComponent<?>> copied = byType.get(req.requirementType);
+        if (copied == null) {
+            copied = ((ComponentRequirement.MultiComponent) req).copyComponents(compList);
+            if (copied != null) {
+                byType.put(req.requirementType, copied);
+            }
+        }
+        return copied;
     }
 
     public void updateComponents(Collection<ProcessingComponent<?>> components) {
@@ -630,11 +663,14 @@ public class RecipeCraftingContext {
             }
         };
 
-        private final Map<String, Integer> unlocErrorMessagesMap = new HashMap<>();
+        private Map<String, Integer> unlocErrorMessagesMap;
         public float validity = 0F;
 
         public void addError(String unlocError) {
             if (!unlocError.isEmpty()) {
+                if (unlocErrorMessagesMap == null) {
+                    unlocErrorMessagesMap = new HashMap<>();
+                }
                 int count = this.unlocErrorMessagesMap.getOrDefault(unlocError, 0);
                 count++;
                 this.unlocErrorMessagesMap.put(unlocError, count);
@@ -642,7 +678,9 @@ public class RecipeCraftingContext {
         }
 
         public void overrideError(String unlocError) {
-            this.unlocErrorMessagesMap.clear();
+            if (unlocErrorMessagesMap != null) {
+                unlocErrorMessagesMap.clear();
+            }
             addError(unlocError);
         }
 
@@ -655,6 +693,9 @@ public class RecipeCraftingContext {
         }
 
         public List<String> getUnlocalizedErrorMessages() {
+            if (unlocErrorMessagesMap == null) {
+                return new ArrayList<>();
+            }
             List<Map.Entry<String, Integer>> toSort = new ArrayList<>(this.unlocErrorMessagesMap.entrySet());
             toSort.sort(Map.Entry.comparingByValue());
             List<String> list = new ArrayList<>();
@@ -666,16 +707,33 @@ public class RecipeCraftingContext {
         }
 
         public String getFirstErrorMessage(String defaultMessage) {
-            List<String> unlocalizedErrorMessages = getUnlocalizedErrorMessages();
-            return unlocalizedErrorMessages.isEmpty() ? defaultMessage : unlocalizedErrorMessages.get(0);
+            // Addons may override the list method; preserve that dispatch for subclasses.
+            if (getClass() != CraftingCheckResult.class) {
+                List<String> messages = getUnlocalizedErrorMessages();
+                return messages.isEmpty() ? defaultMessage : messages.get(0);
+            }
+            if (unlocErrorMessagesMap == null || unlocErrorMessagesMap.isEmpty()) {
+                return defaultMessage;
+            }
+            String first = defaultMessage;
+            int lowestCount = Integer.MAX_VALUE;
+            boolean found = false;
+            for (Map.Entry<String, Integer> entry : unlocErrorMessagesMap.entrySet()) {
+                if (!found || entry.getValue() < lowestCount) {
+                    first = entry.getKey();
+                    lowestCount = entry.getValue();
+                    found = true;
+                }
+            }
+            return first;
         }
 
         public boolean isFailure() {
-            return !this.unlocErrorMessagesMap.isEmpty();
+            return unlocErrorMessagesMap != null && !unlocErrorMessagesMap.isEmpty();
         }
 
         public boolean isSuccess() {
-            return this.unlocErrorMessagesMap.isEmpty();
+            return unlocErrorMessagesMap == null || unlocErrorMessagesMap.isEmpty();
         }
 
     }

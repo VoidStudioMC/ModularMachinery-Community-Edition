@@ -70,11 +70,13 @@ public abstract class TileEnergyHatch extends TileEnergyHatchBase implements
         }
 
         TileEnergyStorageCore core = null;
-        Iterable<BlockPos> positions = BlockPos.getAllInBox(pos.add(-searchRange, -searchRange, -searchRange), pos.add(searchRange, searchRange, searchRange));
+        Iterable<BlockPos.MutableBlockPos> positions = BlockPos.getAllInBoxMutable(pos.add(-searchRange, -searchRange, -searchRange), pos.add(searchRange, searchRange, searchRange));
 
+        // The cursor is used only for block-state reads. Preserve the original x/y/z order
+        // and pass an immutable position to tile lookup, where code may retain it.
         for (BlockPos blockPos : positions) {
             if (world.getBlockState(blockPos).getBlock() == DEFeatures.energyStorageCore) {
-                TileEntity tile = world.getTileEntity(blockPos);
+                TileEntity tile = world.getTileEntity(blockPos.toImmutable());
                 if (tile instanceof TileEnergyStorageCore && ((TileEnergyStorageCore) tile).active.value) {
                     core = (TileEnergyStorageCore) tile;
                     break;

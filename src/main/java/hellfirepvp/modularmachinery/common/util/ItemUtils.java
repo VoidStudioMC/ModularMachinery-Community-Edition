@@ -54,7 +54,7 @@ public class ItemUtils {
     //Negative amount: overhead fuel burnt
     //Positive amount: Failure/couldn't find enough fuel
     public static int consumeFromInventoryFuel(IItemHandlerModifiable handler, int fuelAmtToConsume, boolean simulate, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryFuel(handler, matchNBTTag);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryFuel(handler, matchNBTTag, true);
         if (contents.isEmpty()) {
             return fuelAmtToConsume;
         }
@@ -93,7 +93,7 @@ public class ItemUtils {
     }
 
     public static boolean consumeFromInventory(IItemHandlerModifiable handler, ItemStack toConsume, boolean simulate, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, matchNBTTag);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, matchNBTTag, true);
         if (contents.isEmpty()) return false;
 
         int cAmt = toConsume.getCount();
@@ -125,7 +125,7 @@ public class ItemUtils {
     }
 
     public static boolean consumeFromInventory(IItemHandlerModifiable handler, ItemStack toConsume, boolean simulate, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, itemChecker, controller);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, itemChecker, controller, true);
         if (contents.isEmpty()) return false;
 
         int cAmt = toConsume.getCount();
@@ -157,7 +157,7 @@ public class ItemUtils {
     }
 
     public static int consumeAll(IItemHandlerModifiable handler, ItemStack toConsume, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, itemChecker, controller);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, itemChecker, controller, true);
         if (toConsume.getCount() <= 0 || contents.isEmpty()) {
             return 0;
         }
@@ -165,7 +165,7 @@ public class ItemUtils {
     }
 
     public static int consumeAll(IItemHandlerModifiable handler, ItemStack toConsume, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, matchNBTTag);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventory(handler, toConsume, false, matchNBTTag, true);
         if (toConsume.getCount() <= 0 || contents.isEmpty()) {
             return 0;
         }
@@ -173,7 +173,7 @@ public class ItemUtils {
     }
 
     public static int consumeAll(IItemHandlerModifiable handler, String oreName, int amount, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryOreDict(handler, oreName, itemChecker, controller);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryOreDict(handler, oreName, itemChecker, controller, true);
         if (amount <= 0 || contents.isEmpty()) {
             return 0;
         }
@@ -181,7 +181,7 @@ public class ItemUtils {
     }
 
     public static int consumeAll(IItemHandlerModifiable handler, String oreName, int amount, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryOreDict(handler, oreName, matchNBTTag);
+        Int2ObjectMap<ItemStack> contents = findItemsIndexedInInventoryOreDict(handler, oreName, matchNBTTag, true);
         if (amount <= 0 || contents.isEmpty()) {
             return 0;
         }
@@ -236,7 +236,11 @@ public class ItemUtils {
 
     private static int consumeAllInternal(IItemHandlerModifiable handler, Int2ObjectMap<ItemStack> contents, int maxConsume) {
         int cAmt = 0;
-        for (final Int2ObjectMap.Entry<ItemStack> content : contents.int2ObjectEntrySet()) {
+        var entries = contents.int2ObjectEntrySet();
+        var iterator = entries instanceof Int2ObjectMap.FastEntrySet
+                ? ((Int2ObjectMap.FastEntrySet<ItemStack>) entries).fastIterator() : entries.iterator();
+        while (iterator.hasNext()) {
+            final Int2ObjectMap.Entry<ItemStack> content = iterator.next();
             int slot = content.getIntKey();
             ItemStack stack = content.getValue();
             int count = stack.getCount();
@@ -322,69 +326,161 @@ public class ItemUtils {
         return beInserted;
     }
 
+    // Buffer the first match. Two or more matches retain the original capacity and
+    // insertion order. Only internal consumers use compact empty/singleton maps;
+    // public callers retain the original capacity even if they later add more entries.
     public static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryFuel(IItemHandlerModifiable handler, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> stacksOut = new Int2ObjectOpenHashMap<>(handler.getSlots() * 2);
+        return findItemsIndexedInInventoryFuel(handler, matchNBTTag, false);
+    }
+
+    private static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryFuel(IItemHandlerModifiable handler, @Nullable NBTTagCompound matchNBTTag, boolean compactSingleton) {
+        int expectedSize = handler.getSlots() * 2;
+        Int2ObjectMap<ItemStack> stacksOut = null;
+        int firstSlot = -1;
+        ItemStack firstStack = null;
         for (int j = 0; j < handler.getSlots(); j++) {
             ItemStack s = handler.getStackInSlot(j);
             if (TileEntityFurnace.getItemBurnTime(s) > 0 && NBTMatchingHelper.matchNBTCompound(matchNBTTag, s.getTagCompound())) {
-                stacksOut.put(j, s);
+                if (firstSlot == -1) {
+                    firstSlot = j;
+                    firstStack = s;
+                } else {
+                    if (stacksOut == null) {
+                        stacksOut = new Int2ObjectOpenHashMap<>(expectedSize);
+                        stacksOut.put(firstSlot, firstStack);
+                    }
+                    stacksOut.put(j, s);
+                }
             }
         }
-        return stacksOut;
+        return stacksOut != null ? stacksOut : singleIndexedItem(expectedSize, compactSingleton, firstSlot, firstStack);
     }
 
     public static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryOreDict(IItemHandlerModifiable handler, String oreDict, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> stacksOut = new Int2ObjectOpenHashMap<>(handler.getSlots() * 2);
+        return findItemsIndexedInInventoryOreDict(handler, oreDict, matchNBTTag, false);
+    }
+
+    private static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryOreDict(IItemHandlerModifiable handler, String oreDict, @Nullable NBTTagCompound matchNBTTag, boolean compactSingleton) {
+        int expectedSize = handler.getSlots() * 2;
+        Int2ObjectMap<ItemStack> stacksOut = null;
+        int firstSlot = -1;
+        ItemStack firstStack = null;
         for (int j = 0; j < handler.getSlots(); j++) {
             ItemStack s = handler.getStackInSlot(j);
             if (s.isEmpty()) continue;
             int[] ids = OredictCache.getOreIDsFast(s);
             for (int id : ids) {
                 if (OreDictionary.getOreName(id).equals(oreDict) && NBTMatchingHelper.matchNBTCompound(matchNBTTag, s.getTagCompound())) {
-                    stacksOut.put(j, s);
+                    if (firstSlot == -1) {
+                        firstSlot = j;
+                        firstStack = s;
+                    } else {
+                        if (stacksOut == null) {
+                            stacksOut = new Int2ObjectOpenHashMap<>(expectedSize);
+                            stacksOut.put(firstSlot, firstStack);
+                        }
+                        stacksOut.put(j, s);
+                    }
                     break;
                 }
             }
         }
-        return stacksOut;
+        return stacksOut != null ? stacksOut : singleIndexedItem(expectedSize, compactSingleton, firstSlot, firstStack);
     }
 
     public static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryOreDict(IItemHandlerModifiable handler, String oreDict, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller) {
-        Int2ObjectMap<ItemStack> stacksOut = new Int2ObjectOpenHashMap<>(handler.getSlots() * 2);
+        return findItemsIndexedInInventoryOreDict(handler, oreDict, itemChecker, controller, false);
+    }
+
+    private static Int2ObjectMap<ItemStack> findItemsIndexedInInventoryOreDict(IItemHandlerModifiable handler, String oreDict, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller, boolean compactSingleton) {
+        int expectedSize = handler.getSlots() * 2;
+        Int2ObjectMap<ItemStack> stacksOut = null;
+        int firstSlot = -1;
+        ItemStack firstStack = null;
         for (int j = 0; j < handler.getSlots(); j++) {
             ItemStack s = handler.getStackInSlot(j);
             if (s.isEmpty()) continue;
             int[] ids = OredictCache.getOreIDsFast(s);
             for (int id : ids) {
                 if (OreDictionary.getOreName(id).equals(oreDict) && itemChecker.isMatch(controller, s)) {
-                    stacksOut.put(j, s);
+                    if (firstSlot == -1) {
+                        firstSlot = j;
+                        firstStack = s;
+                    } else {
+                        if (stacksOut == null) {
+                            stacksOut = new Int2ObjectOpenHashMap<>(expectedSize);
+                            stacksOut.put(firstSlot, firstStack);
+                        }
+                        stacksOut.put(j, s);
+                    }
                     break;
                 }
             }
         }
-        return stacksOut;
+        return stacksOut != null ? stacksOut : singleIndexedItem(expectedSize, compactSingleton, firstSlot, firstStack);
     }
 
     public static Int2ObjectMap<ItemStack> findItemsIndexedInInventory(IItemHandlerModifiable handler, ItemStack match, boolean strict, @Nullable NBTTagCompound matchNBTTag) {
-        Int2ObjectMap<ItemStack> stacksOut = new Int2ObjectOpenHashMap<>(handler.getSlots() * 2);
+        return findItemsIndexedInInventory(handler, match, strict, matchNBTTag, false);
+    }
+
+    private static Int2ObjectMap<ItemStack> findItemsIndexedInInventory(IItemHandlerModifiable handler, ItemStack match, boolean strict, @Nullable NBTTagCompound matchNBTTag, boolean compactSingleton) {
+        int expectedSize = handler.getSlots() * 2;
+        Int2ObjectMap<ItemStack> stacksOut = null;
+        int firstSlot = -1;
+        ItemStack firstStack = null;
         for (int j = 0; j < handler.getSlots(); j++) {
             ItemStack s = handler.getStackInSlot(j);
             if ((strict ? matchStacks(s, match) : matchStackLoosely(s, match)) && NBTMatchingHelper.matchNBTCompound(matchNBTTag, s.getTagCompound())) {
-                stacksOut.put(j, s);
+                if (firstSlot == -1) {
+                    firstSlot = j;
+                    firstStack = s;
+                } else {
+                    if (stacksOut == null) {
+                        stacksOut = new Int2ObjectOpenHashMap<>(expectedSize);
+                        stacksOut.put(firstSlot, firstStack);
+                    }
+                    stacksOut.put(j, s);
+                }
             }
         }
-        return stacksOut;
+        return stacksOut != null ? stacksOut : singleIndexedItem(expectedSize, compactSingleton, firstSlot, firstStack);
     }
 
     public static Int2ObjectMap<ItemStack> findItemsIndexedInInventory(IItemHandlerModifiable handler, ItemStack match, boolean strict, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller) {
-        Int2ObjectMap<ItemStack> stacksOut = new Int2ObjectOpenHashMap<>(handler.getSlots() * 2);
+        return findItemsIndexedInInventory(handler, match, strict, itemChecker, controller, false);
+    }
+
+    private static Int2ObjectMap<ItemStack> findItemsIndexedInInventory(IItemHandlerModifiable handler, ItemStack match, boolean strict, AdvancedItemChecker itemChecker, TileMultiblockMachineController controller, boolean compactSingleton) {
+        int expectedSize = handler.getSlots() * 2;
+        Int2ObjectMap<ItemStack> stacksOut = null;
+        int firstSlot = -1;
+        ItemStack firstStack = null;
         for (int j = 0; j < handler.getSlots(); j++) {
             ItemStack s = handler.getStackInSlot(j);
             if ((strict ? matchStacks(s, match) : matchStackLoosely(s, match)) && itemChecker.isMatch(controller, s)) {
-                stacksOut.put(j, s);
+                if (firstSlot == -1) {
+                    firstSlot = j;
+                    firstStack = s;
+                } else {
+                    if (stacksOut == null) {
+                        stacksOut = new Int2ObjectOpenHashMap<>(expectedSize);
+                        stacksOut.put(firstSlot, firstStack);
+                    }
+                    stacksOut.put(j, s);
+                }
             }
         }
-        return stacksOut;
+        return stacksOut != null ? stacksOut : singleIndexedItem(expectedSize, compactSingleton, firstSlot, firstStack);
+    }
+
+    private static Int2ObjectMap<ItemStack> singleIndexedItem(int expectedSize, boolean compactSingleton,
+                                                               int slot, ItemStack stack) {
+        Int2ObjectMap<ItemStack> result = new Int2ObjectOpenHashMap<>(compactSingleton ? (slot < 0 ? 0 : 1) : expectedSize);
+        if (slot >= 0) {
+            result.put(slot, stack);
+        }
+        return result;
     }
 
     public static boolean matchStacks(@Nonnull ItemStack stack, @Nonnull ItemStack other) {
@@ -432,13 +528,13 @@ public class ItemUtils {
     @Nonnull
     @SuppressWarnings("unchecked")
     public static List<ProcessingComponent<?>> copyItemHandlerComponents(final List<ProcessingComponent<?>> components) {
-        List<ProcessingComponent<?>> list = new ArrayList<>();
+        List<ProcessingComponent<?>> list = new ArrayList<>(components.size());
         for (ProcessingComponent<?> component : components) {
             Object provided = component.getProvidedComponent();
             IItemHandlerImpl handler = null;
 
             if (provided instanceof IItemHandlerImpl handlerMM) {
-                handler = handlerMM.copy();
+                handler = handlerMM.copyForRecipe();
             } else if (provided instanceof IItemHandlerModifiable handlerDefault) {
                 handler = new IItemHandlerImpl(handlerDefault);
             }
@@ -457,7 +553,7 @@ public class ItemUtils {
     @Nonnull
     @SuppressWarnings("unchecked")
     public static List<ProcessingComponent<?>> fastCopyItemHandlerComponents(final List<ProcessingComponent<?>> components) {
-        List<ProcessingComponent<?>> list = new ArrayList<>();
+        List<ProcessingComponent<?>> list = new ArrayList<>(components.size());
         for (ProcessingComponent<?> component : components) {
             ProcessingComponent<Object> objectProcessingComponent = new ProcessingComponent<>(
                     (MachineComponent<Object>) component.component(),
