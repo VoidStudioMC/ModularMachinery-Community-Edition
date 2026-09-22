@@ -23,8 +23,10 @@ import hellfirepvp.modularmachinery.common.modifier.SingleBlockModifierReplaceme
 import hellfirepvp.modularmachinery.common.tiles.base.TileMultiblockMachineController;
 import hellfirepvp.modularmachinery.common.util.Asyncable;
 import hellfirepvp.modularmachinery.common.util.ResultChance;
+import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -668,12 +670,12 @@ public class RecipeCraftingContext {
 
         public void addError(String unlocError) {
             if (!unlocError.isEmpty()) {
-                if (unlocErrorMessagesMap == null) {
-                    unlocErrorMessagesMap = new HashMap<>();
-                }
-                int count = this.unlocErrorMessagesMap.getOrDefault(unlocError, 0);
+                if (this.unlocErrorMessagesMap == null) this.unlocErrorMessagesMap = new Object2IntArrayMap<>();
+                Map<String, Integer> uemm = this.unlocErrorMessagesMap;
+
+                int count = uemm.getOrDefault(unlocError, 0);
                 count++;
-                this.unlocErrorMessagesMap.put(unlocError, count);
+                uemm.put(unlocError, count);
             }
         }
 
@@ -693,12 +695,12 @@ public class RecipeCraftingContext {
         }
 
         public List<String> getUnlocalizedErrorMessages() {
-            if (unlocErrorMessagesMap == null) {
-                return new ArrayList<>();
-            }
-            List<Map.Entry<String, Integer>> toSort = new ArrayList<>(this.unlocErrorMessagesMap.entrySet());
+            Map<String, Integer> uemm = this.unlocErrorMessagesMap;
+            if (uemm == null) return new ArrayList<>(0);
+
+            List<Map.Entry<String, Integer>> toSort = new ObjectArrayList<>(uemm.entrySet());
             toSort.sort(Map.Entry.comparingByValue());
-            List<String> list = new ArrayList<>();
+            List<String> list = new ObjectArrayList<>(toSort.size());
             for (Map.Entry<String, Integer> stringIntegerEntry : toSort) {
                 String key = stringIntegerEntry.getKey();
                 list.add(key);
@@ -712,13 +714,14 @@ public class RecipeCraftingContext {
                 List<String> messages = getUnlocalizedErrorMessages();
                 return messages.isEmpty() ? defaultMessage : messages.get(0);
             }
-            if (unlocErrorMessagesMap == null || unlocErrorMessagesMap.isEmpty()) {
-                return defaultMessage;
-            }
+
+            Map<String, Integer> uemm = this.unlocErrorMessagesMap;
+            if (uemm == null || uemm.isEmpty()) return defaultMessage;
+
             String first = defaultMessage;
             int lowestCount = Integer.MAX_VALUE;
             boolean found = false;
-            for (Map.Entry<String, Integer> entry : unlocErrorMessagesMap.entrySet()) {
+            for (Map.Entry<String, Integer> entry : uemm.entrySet()) {
                 if (!found || entry.getValue() < lowestCount) {
                     first = entry.getKey();
                     lowestCount = entry.getValue();
@@ -729,11 +732,13 @@ public class RecipeCraftingContext {
         }
 
         public boolean isFailure() {
-            return unlocErrorMessagesMap != null && !unlocErrorMessagesMap.isEmpty();
+            Map<String, Integer> uemm = this.unlocErrorMessagesMap;
+            return uemm != null && !uemm.isEmpty();
         }
 
         public boolean isSuccess() {
-            return unlocErrorMessagesMap == null || unlocErrorMessagesMap.isEmpty();
+            Map<String, Integer> uemm = this.unlocErrorMessagesMap;
+            return uemm == null || uemm.isEmpty();
         }
 
     }

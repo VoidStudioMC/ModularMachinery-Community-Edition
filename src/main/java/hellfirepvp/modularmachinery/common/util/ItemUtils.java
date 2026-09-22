@@ -17,6 +17,7 @@ import hellfirepvp.modularmachinery.common.tiles.base.TileMultiblockMachineContr
 import hellfirepvp.modularmachinery.common.util.nbt.NBTMatchingHelper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -528,7 +529,7 @@ public class ItemUtils {
     @Nonnull
     @SuppressWarnings("unchecked")
     public static List<ProcessingComponent<?>> copyItemHandlerComponents(final List<ProcessingComponent<?>> components) {
-        List<ProcessingComponent<?>> list = new ArrayList<>(components.size());
+        List<ProcessingComponent<?>> list = new ObjectArrayList<>(components.size());
         for (ProcessingComponent<?> component : components) {
             Object provided = component.getProvidedComponent();
             IItemHandlerImpl handler = null;
@@ -553,7 +554,7 @@ public class ItemUtils {
     @Nonnull
     @SuppressWarnings("unchecked")
     public static List<ProcessingComponent<?>> fastCopyItemHandlerComponents(final List<ProcessingComponent<?>> components) {
-        List<ProcessingComponent<?>> list = new ArrayList<>(components.size());
+        List<ProcessingComponent<?>> list = new ObjectArrayList<>(components.size());
         for (ProcessingComponent<?> component : components) {
             ProcessingComponent<Object> objectProcessingComponent = new ProcessingComponent<>(
                     (MachineComponent<Object>) component.component(),
