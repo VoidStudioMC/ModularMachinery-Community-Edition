@@ -24,6 +24,7 @@ import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.IAnimatableModel;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.geo.render.built.*;
+import software.bernie.geckolib3.renderers.geo.IGeoRenderer;
 
 import javax.annotation.Nonnull;
 import javax.vecmath.Vector3f;
@@ -189,6 +190,8 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
 
             bufferProvider.finishDrawing(renderStatic);
             renderInst.returnRenderInst();
+
+            IGeoRenderer.drawParticles(model, tile, 0f);
         }
     }
 

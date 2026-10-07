@@ -208,7 +208,8 @@ dependencies {
     implementation(rfg.deobf("curse.maven:mekanism-energistics-1027681:5408319"))
 
     // GeckoLib
-    implementation("software.bernie.geckolib:geckolib-forge-1.12.2:3.0.31")
+    //implementation("software.bernie.geckolib:geckolib-forge-1.12.2:3.0.31")
+    implementation(rfg.deobf("kasuminova:SauriaLib3:3.2.1:shadreobf"))
     // GTCEu / Bloom Effect Support
     compileOnly(rfg.deobf("curse.maven:gregtech-ce-unofficial-557242:5322654"))
     // Bloom Effect Support
