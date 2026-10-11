@@ -118,11 +118,11 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
                        double x, double y, double z,
                        final float partialTicks)
     {
-        renderWithBuffer(tile);
+        renderWithBuffer(tile, x, y, z);
     }
 
     @Optional.Method(modid = "geckolib3")
-    private void renderWithBuffer(final TileMultiblockMachineController animatable) {
+    private void renderWithBuffer(final TileMultiblockMachineController animatable, double x, double y, double z) {
         GeoModelRenderTask task = getTask(animatable);
 
         if (MachineControllerRenderer.shouldUseBloom() && !ShaderManager.isOptifineShaderPackLoaded()) {
@@ -135,6 +135,11 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
             render(animatable, task, true);
         }
 
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, z);
+        GlStateManager.translate(0, 0.01f, 0);
+        GlStateManager.translate(0.5, 0, 0.5);
+
         MachineControllerModel modelProvider = animatable.getCurrentModel();
         if (modelProvider == null) {
             return;
@@ -142,6 +147,8 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         MachineControllerModel renderInst = modelProvider.getRenderInstance();
         GeoModel model = renderInst.getModel();
         IGeoRenderer.drawParticles(model, animatable, 0f);
+
+        GlStateManager.popMatrix();
     }
 
     @Optional.Method(modid = "geckolib3")
