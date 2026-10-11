@@ -134,6 +134,14 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         if (task.shouldReRenderStatic()) {
             render(animatable, task, true);
         }
+
+        MachineControllerModel modelProvider = animatable.getCurrentModel();
+        if (modelProvider == null) {
+            return;
+        }
+        MachineControllerModel renderInst = modelProvider.getRenderInstance();
+        GeoModel model = renderInst.getModel();
+        IGeoRenderer.drawParticles(model, animatable, 0f);
     }
 
     @Optional.Method(modid = "geckolib3")
@@ -152,8 +160,6 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         }
 
         Tessellator.getInstance().draw();
-
-        IGeoRenderer.drawParticles(model, ctrl, 0f);
     }
 
     @Optional.Method(modid = "geckolib3")
