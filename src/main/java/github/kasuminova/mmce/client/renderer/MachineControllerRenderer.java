@@ -132,7 +132,14 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
             render(animatable, task, true);
         }
 
-        RenderHelper.disableStandardItemLighting();
+        int light = animatable.getWorld().getCombinedLight(animatable.getPos(), 0);
+        int lx = light % 65536;
+        int ly = light / 65536;
+
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        OpenGlHelper.setLightmapTextureCoords(GL11.GL_TEXTURE_2D, lx, ly);
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(x + 0.5, y + 0.01f, z + 0.5);
         rotateBlockAt(animatable.getControllerRotation());
@@ -145,7 +152,6 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         IGeoRenderer.drawParticles(model, animatable, 0f);
 
         GlStateManager.popMatrix();
-        RenderHelper.enableStandardItemLighting();
     }
 
     @Optional.Method(modid = "geckolib3")
