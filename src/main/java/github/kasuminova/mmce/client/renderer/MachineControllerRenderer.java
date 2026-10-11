@@ -136,21 +136,14 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         }
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(x, y, z);
-        GlStateManager.translate(0, 0.01f, 0);
-        GlStateManager.translate(0.5, 0, 0.5);
+        GlStateManager.translate(x + 0.5, y + 0.01f, z + 0.5);
 
-        MachineControllerModel modelProvider = animatable.getCurrentModel();
+        MachineControllerModel modelProvider = task.currentModel;
         if (modelProvider == null) {
             return;
         }
-        MachineControllerModel renderInst = modelProvider.getRenderInstance();
-        GeoModel model = renderInst.getModel();
-
-        synchronized (model) {
-            IGeoRenderer.drawParticles(model, animatable, 0f);
-            renderInst.returnRenderInst();
-        }
+        GeoModel model = modelProvider.getModel();
+        IGeoRenderer.drawParticles(model, animatable, 0f);
 
         GlStateManager.popMatrix();
     }
