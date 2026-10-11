@@ -152,6 +152,8 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         }
 
         Tessellator.getInstance().draw();
+
+        IGeoRenderer.drawParticles(model, ctrl, 0f);
     }
 
     @Optional.Method(modid = "geckolib3")
@@ -190,8 +192,6 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
 
             bufferProvider.finishDrawing(renderStatic);
             renderInst.returnRenderInst();
-
-            IGeoRenderer.drawParticles(model, tile, 0f);
         }
     }
 
