@@ -146,7 +146,9 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         }
         MachineControllerModel renderInst = modelProvider.getRenderInstance();
         GeoModel model = renderInst.getModel();
+        renderInst.setLivingAnimations(animatable, animatable.hashCode());
         IGeoRenderer.drawParticles(model, animatable, 0f);
+        renderInst.returnRenderInst();
 
         GlStateManager.popMatrix();
     }
