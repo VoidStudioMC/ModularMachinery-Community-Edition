@@ -9,10 +9,7 @@ import github.kasuminova.mmce.common.concurrent.TaskExecutor;
 import hellfirepvp.modularmachinery.ModularMachinery;
 import hellfirepvp.modularmachinery.common.base.Mods;
 import hellfirepvp.modularmachinery.common.tiles.base.TileMultiblockMachineController;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -135,8 +132,10 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
             render(animatable, task, true);
         }
 
+        RenderHelper.disableStandardItemLighting();
         GlStateManager.pushMatrix();
         GlStateManager.translate(x + 0.5, y + 0.01f, z + 0.5);
+        rotateBlockAt(animatable.getControllerRotation());
 
         MachineControllerModel modelProvider = task.currentModel;
         if (modelProvider == null) {
@@ -146,6 +145,7 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         IGeoRenderer.drawParticles(model, animatable, 0f);
 
         GlStateManager.popMatrix();
+        RenderHelper.enableStandardItemLighting();
     }
 
     @Optional.Method(modid = "geckolib3")
@@ -370,4 +370,25 @@ public class MachineControllerRenderer extends TileEntitySpecialRenderer<TileMul
         return Mods.GREGTECHCEU.isPresent() || Mods.LUMENIZED.isPresent();
     }
 
+    private static void rotateBlockAt(EnumFacing facing) {
+        switch (facing) {
+            case SOUTH:
+                GlStateManager.rotate(180, 0, 1, 0);
+                break;
+            case WEST:
+                GlStateManager.rotate(90, 0, 1, 0);
+                break;
+            case NORTH:
+                break;
+            case EAST:
+                GlStateManager.rotate(270, 0, 1, 0);
+                break;
+            case UP:
+                GlStateManager.rotate(90, 1, 0, 0);
+                break;
+            case DOWN:
+                GlStateManager.rotate(90, -1, 0, 0);
+                break;
+        }
+    }
 }
